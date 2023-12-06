@@ -1,8 +1,11 @@
-import { Product } from "../../models/product";
-import { mongooseConnect } from "../../lib/mongoose";
-import { isAdminRequest } from "./auth/[...nextauth]";
+import { Product } from "@/models/product";
+import { mongooseConnect } from "@/lib/mongoose";
+import { isAdminRequest } from "@/pages/api/auth/[...nextauth]";
 
-export default async function handle(req, res) {
+export default async function handle(
+    req: { body?: any; query?: any; method?: any },
+    res: { json: (arg0: boolean | any[]) => void }
+) {
     const { method } = req;
     await mongooseConnect();
     await isAdminRequest(req, res);
@@ -24,6 +27,7 @@ export default async function handle(req, res) {
 
     if (method === "GET") {
         if (req.query.id) {
+            // @ts-ignore
             res.json(await Product.findOne({ _id: req.query.id }));
         } else {
             res.json(await Product.find());

@@ -1,38 +1,38 @@
-import Layout from "../components/layout";
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import axios from "axios";
+import Layout from "@/components/layout";
+import { useCallback, useEffect } from "react";
 import { withSwal } from "react-sweetalert2";
-import { redirect } from "next/navigation";
 import { useRouter } from "next/router";
+import { useAppDispatch, useAppSelector } from "@/store";
+import { deleteProduct, getProducts } from "@/store/thunks/products";
+import { ProductType } from "@/common/types/product";
+import { deleteProductFromState } from "@/store/slices/products";
 
-function Products({ swal }) {
-    const [products, setProducts] = useState([]);
+function Products({ swal }: any) {
+    const { products } = useAppSelector((state) => state.products);
     const { push } = useRouter();
+    const dispatch = useAppDispatch();
+
+    const fetchProducts = useCallback(() => {
+        dispatch(getProducts());
+    }, [dispatch]);
 
     useEffect(() => {
         fetchProducts();
-    }, []);
+    }, [fetchProducts]);
 
-    const fetchProducts = () => {
-        axios.get("/api/products").then((response) => {
-            setProducts(response.data);
-        });
-    };
-
-    const handleDeleteProduct = (product) => {
+    const handleDeleteProduct = (product: ProductType) => {
         swal.fire({
             title: "Are you sure?",
-            text: `Do you want delete category ${product.name}`,
+            text: `Do you want delete category ${product.title}`,
             showCancelButton: true,
             cancelButtonText: "Cancel",
             confirmButtonText: "Yes. Delete!",
             confirmButtonColor: "#d55",
             reverseButtons: true
-        }).then(async (result) => {
+        }).then(async (result: { isConfirmed: boolean }) => {
             if (result.isConfirmed) {
-                await axios.delete("/api/products?id=" + product._id);
-                fetchProducts();
+                dispatch(deleteProduct(product._id));
+                dispatch(deleteProductFromState({ id: product._id }));
             }
         });
     };
@@ -55,7 +55,7 @@ function Products({ swal }) {
                     </tr>
                 </thead>
                 <tbody>
-                    {products.map((product) => (
+                    {products.map((product: ProductType) => (
                         <tr key={product._id}>
                             <td>{product.title}</td>
                             <td className="flex gap-1">
@@ -111,4 +111,4 @@ function Products({ swal }) {
     );
 }
 
-export default withSwal(({ swal }, ref) => <Products swal={swal} />);
+export default withSwal(({ swal }: any, ref: any) => <Products swal={swal} />);

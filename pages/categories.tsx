@@ -1,45 +1,56 @@
 import Layout from "../components/layout";
-import { useEffect, useState } from "react";
+import { ChangeEvent, useCallback, useEffect, useState } from "react";
 import { withSwal } from "react-sweetalert2";
-import axios from "axios";
+import {
+    CategoryChangeType,
+    CategoryType,
+    PropertyType
+} from "@/common/types/category";
+import { useAppDispatch, useAppSelector } from "@/store";
+import {
+    createCategory,
+    deleteCategory,
+    getCategories,
+    updateCategory
+} from "@/store/thunks/categories";
 
-function Categories({ swal }) {
+function Categories({ swal }: any) {
     const [categoryName, setCategoryName] = useState("");
-    const [categories, setCategories] = useState([]);
-    const [properties, setProperties] = useState([]);
-    const [parentCategory, setParentCategory] = useState("");
-    const [editedCategory, setEditedCategory] = useState(null);
+    const [properties, setProperties] = useState<PropertyType[]>([]);
+    const [parentCategory, setParentCategory] = useState<string>("");
+    const [editedCategory, setEditedCategory] = useState<CategoryType | null>(
+        null
+    );
+    const { categories } = useAppSelector((state) => state.categories);
+    const dispatch = useAppDispatch();
+
+    const fetchCategories = useCallback(() => {
+        dispatch(getCategories());
+    }, [dispatch]);
 
     useEffect(() => {
         fetchCategories();
-    }, []);
+    }, [fetchCategories]);
 
-    const fetchCategories = () => {
-        return axios.get("/api/categories").then((response) => {
-            setCategories(response.data);
-        });
-    };
-
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: { preventDefault: () => void }) => {
         e.preventDefault();
 
         const data = {
             name: categoryName,
             parent: parentCategory,
-            properties: properties.map((property) => ({
-                name: property.name,
-                values: property.values.split(",")
-            }))
+            properties: properties.map(
+                (element: { name: string; values: any }) => ({
+                    name: element.name,
+                    values: element.values.split(",")
+                })
+            )
         };
 
         if (editedCategory) {
-            await axios.put("/api/categories", {
-                ...data,
-                _id: editedCategory._id
-            });
+            dispatch(updateCategory({ ...data, _id: editedCategory._id }));
             setEditedCategory(null);
         } else {
-            await axios.post("/api/categories", data);
+            dispatch(createCategory(data));
             setParentCategory("");
         }
 
@@ -49,19 +60,21 @@ function Categories({ swal }) {
         return fetchCategories();
     };
 
-    const handleEditCategory = (category) => {
+    const handleEditCategory = (category: CategoryType) => {
         setEditedCategory(category);
         setCategoryName(category.name);
         setParentCategory(category.parent?._id);
         setProperties(
-            category.properties.map(({ name, values }) => ({
-                name,
-                values: values.join(",")
-            }))
+            category.properties.map(
+                ({ name, values }: { name: string; values: any }) => ({
+                    name,
+                    values: values.join(",")
+                })
+            )
         );
     };
 
-    const handleDeleteCategory = (category) => {
+    const handleDeleteCategory = (category: CategoryType) => {
         swal.fire({
             title: "Are you sure?",
             text: `Do you want delete category ${category.name}`,
@@ -70,37 +83,37 @@ function Categories({ swal }) {
             confirmButtonText: "Yes. Delete!",
             confirmButtonColor: "#d55",
             reverseButtons: true
-        }).then(async (result) => {
+        }).then(async (result: any) => {
             if (result.isConfirmed) {
-                await axios.delete(`/api/categories?_id=${category._id}`);
+                dispatch(deleteCategory(category._id));
                 fetchCategories();
             }
         });
     };
 
     const handleAddNewProperty = () => {
-        setProperties((prevState) => {
+        setProperties((prevState: any) => {
             return [...prevState, { name: "", values: "" }];
         });
     };
 
-    const handlePropertyNameChange = (index, property, newName) => {
+    const handlePropertyNameChange = (args: CategoryChangeType) => {
         setProperties((prevState) => {
             const properties = [...prevState];
-            properties[index].name = newName;
+            properties[args.index].name = args.newName;
             return properties;
         });
     };
 
-    const handlePropertyValuesChange = (index, property, newValues) => {
-        setProperties((prevState) => {
+    const handlePropertyValuesChange = (args: CategoryChangeType) => {
+        setProperties((prevState: any) => {
             const properties = [...prevState];
-            properties[index].values = newValues;
+            properties[args.index].values = args.newName;
             return properties;
         });
     };
 
-    const handleRemoveProperty = (indexToRemove) => {
+    const handleRemoveProperty = (indexToRemove: number) => {
         setProperties((prevState) => {
             return [...prevState].filter((property, propertyIndex) => {
                 return propertyIndex !== indexToRemove;
@@ -114,7 +127,7 @@ function Categories({ swal }) {
             <label>
                 {editedCategory
                     ? `Edit category ${editedCategory.name}`
-                    : "Create new category"}
+                    : "Create new categories"}
             </label>
             <form onSubmit={handleSubmit}>
                 <div className="flex gap-1">
@@ -122,7 +135,9 @@ function Categories({ swal }) {
                         type="text"
                         placeholder="Category name"
                         value={categoryName}
-                        onChange={(e) => setCategoryName(e.target.value)}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                            setCategoryName(e.target.value)
+                        }
                     />
                     <select
                         value={parentCategory}
@@ -130,7 +145,7 @@ function Categories({ swal }) {
                     >
                         <option value="">No parent category</option>
                         {categories.length > 0 &&
-                            categories.map((category) => (
+                            categories.map((category: CategoryType) => (
                                 <option value={category._id} key={category._id}>
                                     {category.name}
                                 </option>
@@ -155,11 +170,11 @@ function Categories({ swal }) {
                                     className="mb-0"
                                     value={property.name}
                                     onChange={(e) =>
-                                        handlePropertyNameChange(
+                                        handlePropertyNameChange({
                                             index,
                                             property,
-                                            e.target.value
-                                        )
+                                            newName: e.target.value
+                                        })
                                     }
                                 />
                                 <input
@@ -168,11 +183,11 @@ function Categories({ swal }) {
                                     className="mb-0"
                                     value={property.values}
                                     onChange={(e) =>
-                                        handlePropertyValuesChange(
+                                        handlePropertyValuesChange({
                                             index,
                                             property,
-                                            e.target.value
-                                        )
+                                            newName: e.target.value
+                                        })
                                     }
                                 />
                                 <button
@@ -218,7 +233,7 @@ function Categories({ swal }) {
                     </thead>
                     <tbody>
                         {categories.length > 0 &&
-                            categories.map((category) => (
+                            categories.map((category: CategoryType) => (
                                 <tr key={category._id}>
                                     <td>{category.name}</td>
                                     <td>{category?.parent?.name}</td>
@@ -253,4 +268,4 @@ function Categories({ swal }) {
     );
 }
 
-export default withSwal(({ swal }, ref) => <Categories swal={swal} />);
+export default withSwal(({ swal }: any) => <Categories swal={swal} />);

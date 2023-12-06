@@ -2,8 +2,9 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { signOut } from "next-auth/react";
 import LogoComponent from "@/components/logo";
+import { NavigationType } from "@/common/types";
 
-export default function Navigation({ showNavigation }) {
+export default function Navigation({ showNavigation }: NavigationType) {
     const router = useRouter();
     const { pathname } = router;
     const inactiveLink = "flex gap-1 p-1";

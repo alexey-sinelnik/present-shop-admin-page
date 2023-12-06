@@ -1,9 +1,16 @@
-import { mongooseConnect } from "../../lib/mongoose";
-import { Category, CategoryParent } from "../../models/categories";
-import { getServerSession } from "next-auth";
-import { authOptions, isAdminRequest } from "./auth/[...nextauth]";
+import { mongooseConnect } from "@/lib/mongoose";
+import { Category } from "@/models/categories";
+import { isAdminRequest } from "./auth/[...nextauth]";
+import { UpdateWriteOpResult } from "mongoose";
 
-export default async function handle(req, res) {
+export default async function handle(
+    req: { body?: any; query?: any; method?: any },
+    res: {
+        json: (
+            arg0: boolean | UpdateWriteOpResult | Omit<any, never>[]
+        ) => void;
+    }
+) {
     const { method } = req;
     const { name, parent, _id, properties } = req.body;
     await mongooseConnect();

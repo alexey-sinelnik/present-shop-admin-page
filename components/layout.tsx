@@ -1,9 +1,10 @@
-import { useSession, signIn } from "next-auth/react";
-import Navigation from "./navigation";
 import { useState } from "react";
+import { useSession, signIn } from "next-auth/react";
+import Navigation from "@/components/navigation";
 import LogoComponent from "@/components/logo";
+import { PropsType } from "@/common/types";
 
-export default function Layout({ children }) {
+export default function Layout({ children }: PropsType) {
     const { data: session } = useSession();
     const [showNavigation, setShowNavigation] = useState(false);
     if (!session) {

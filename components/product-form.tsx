@@ -1,8 +1,12 @@
-import { useEffect, useState } from "react";
+import { SetStateAction, useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import axios from "axios";
-import Spinner from "./spinner";
 import { ReactSortable } from "react-sortablejs";
+import Spinner from "@/components/spinner";
+import { ProductFormProps } from "@/common/types/product";
+import { useAppDispatch, useAppSelector } from "@/store";
+import { getCategories } from "@/store/thunks/categories";
+import { createProduct, updateProduct } from "@/store/thunks/products";
 
 export default function ProductForm({
     _id,
@@ -12,10 +16,10 @@ export default function ProductForm({
     images: existingImages,
     category: assignedCategory,
     properties: assignedProperties
-}) {
+}: ProductFormProps) {
     const [title, setTitle] = useState(existingTitle || "");
     const [description, setDescription] = useState(existingDescription || "");
-    const [price, setPrice] = useState(existingPrice || null);
+    const [price, setPrice] = useState(existingPrice || "");
     const [images, setImages] = useState(existingImages || []);
     const [productProperties, setProductProperties] = useState(
         assignedProperties || {}
@@ -23,17 +27,16 @@ export default function ProductForm({
     const [category, setCategory] = useState(assignedCategory || "");
     const [goToProducts, setGoToProducts] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
-    const [categories, setCategories] = useState([]);
+    const { categories } = useAppSelector((state) => state.categories);
     const { push } = useRouter();
+    const dispatch = useAppDispatch();
     const propertiesToFill = [];
 
     useEffect(() => {
-        axios.get("/api/categories").then((response) => {
-            setCategories(response.data);
-        });
-    }, []);
+        dispatch(getCategories());
+    }, [dispatch]);
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: any) => {
         e.preventDefault();
         const data = {
             title,
@@ -44,9 +47,9 @@ export default function ProductForm({
             properties: productProperties
         };
         if (_id) {
-            await axios.put("/api/products", { ...data, _id });
+            dispatch(updateProduct({ ...data, _id }));
         } else {
-            await axios.post("/api/products", data);
+            dispatch(createProduct(data));
         }
         setGoToProducts(true);
     };
@@ -55,7 +58,7 @@ export default function ProductForm({
         push("/products");
     }
 
-    const uploadImages = async (e) => {
+    const uploadImages = async (e: any) => {
         setIsUploading(true);
         const files = e.target?.files;
         if (files?.length > 0) {
@@ -71,12 +74,15 @@ export default function ProductForm({
         }
     };
 
-    const updateImagesOrder = (images) => {
+    const updateImagesOrder = (images: SetStateAction<string[]>) => {
         setImages(images);
     };
 
-    const setProductProperty = (propertyName, value) => {
-        setProductProperties((prevState) => {
+    const setProductProperty = (
+        propertyName: string | number,
+        value: string
+    ) => {
+        setProductProperties((prevState: any) => {
             const newProductProps = { ...prevState };
             newProductProps[propertyName] = value;
             return newProductProps;
@@ -85,16 +91,19 @@ export default function ProductForm({
 
     if (categories.length > 0 && category) {
         let categoryInfo = categories.find(({ _id }) => _id === category);
-        propertiesToFill.push(...categoryInfo.properties);
+        if (categoryInfo) propertiesToFill.push(...categoryInfo.properties);
 
         while (categoryInfo?.parent?._id) {
             const parentCategory = categories.find(
                 ({ _id }) => _id === categoryInfo?.parent?._id
             );
-            propertiesToFill.push(...parentCategory.properties);
+            parentCategory &&
+                propertiesToFill.push(...parentCategory.properties);
             categoryInfo = parentCategory;
         }
     }
+
+    // TODO Разобраться с ReactSortable компонентом
 
     return (
         <form onSubmit={handleSubmit}>
@@ -136,7 +145,7 @@ export default function ProductForm({
                                 }
                             >
                                 <option value="">None</option>
-                                {property.values.map((value) => (
+                                {property.values.map((value: string) => (
                                     <option value={value} key={value}>
                                         {value}
                                     </option>
@@ -148,7 +157,9 @@ export default function ProductForm({
             <label>Images</label>
             <div className="mb-2 flex flex-wrap gap-1">
                 <ReactSortable
+                    // @ts-ignore
                     list={images}
+                    // @ts-ignore
                     setList={updateImagesOrder}
                     className="flex flex-wrap gap-1"
                 >
