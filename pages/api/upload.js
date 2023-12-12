@@ -20,8 +20,8 @@ export default async function handle(req, res) {
     const client = new S3Client({
         region: "eu-north-1",
         credentials: {
-            accessKeyId: process.env.S3_ACCESS_KEY,
-            secretAccessKey: process.env.S3_SECRET_ACCESS_KEY
+            accessKeyId: process.env.NEXT_PUBLIC_S3_ACCESS_KEY,
+            secretAccessKey: process.env.NEXT_PUBLIC_S3_SECRET_ACCESS_KEY
         }
     });
 

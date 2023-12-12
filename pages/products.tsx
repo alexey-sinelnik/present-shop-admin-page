@@ -37,6 +37,8 @@ function Products({ swal }: any) {
         });
     };
 
+    console.log("URL from mongo", process.env.NEXT_PUBLIC_MONGODB_URI);
+
     return (
         <Layout>
             <button
