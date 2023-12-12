@@ -1,6 +1,5 @@
 import { Product } from "@/models/product";
 import { mongooseConnect } from "@/lib/mongoose";
-import { isAdminRequest } from "@/pages/api/auth/[...nextauth]";
 
 export default async function handle(
     req: { body?: any; query?: any; method?: any },
@@ -8,7 +7,6 @@ export default async function handle(
 ) {
     const { method } = req;
     await mongooseConnect();
-    await isAdminRequest(req, res);
 
     const { title, description, price, images, category, properties, _id } =
         req.body;

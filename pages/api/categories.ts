@@ -1,6 +1,5 @@
 import { mongooseConnect } from "@/lib/mongoose";
 import { Category } from "@/models/categories";
-import { isAdminRequest } from "./auth/[...nextauth]";
 import { UpdateWriteOpResult } from "mongoose";
 
 export default async function handle(
@@ -14,7 +13,6 @@ export default async function handle(
     const { method } = req;
     const { name, parent, _id, properties } = req.body;
     await mongooseConnect();
-    await isAdminRequest(req, res);
 
     if (method === "POST") {
         const category = await Category.create({

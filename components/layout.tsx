@@ -1,26 +1,10 @@
 import { useState } from "react";
-import { useSession, signIn } from "next-auth/react";
 import Navigation from "@/components/navigation";
 import LogoComponent from "@/components/logo";
 import { PropsType } from "@/common/types";
 
 export default function Layout({ children }: PropsType) {
-    const { data: session } = useSession();
     const [showNavigation, setShowNavigation] = useState(false);
-    if (!session) {
-        return (
-            <div className="bg-bgGray w-screen h-screen flex items-center">
-                <div className="text-center w-full">
-                    <button
-                        onClick={() => signIn("google")}
-                        className="btn-primary p-4 rounded-lg"
-                    >
-                        Login with Google
-                    </button>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <div className="bg-bgGray min-h-screen">
