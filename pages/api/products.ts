@@ -1,4 +1,4 @@
-import { Product } from "@/models/product";
+import { Product } from "@/models/products";
 import { mongooseConnect } from "@/lib/mongoose";
 
 export default async function handle(
